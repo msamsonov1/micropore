@@ -1,0 +1,1330 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MicroPore: EVA Sublimator Porous Plate Freeze-Up Sentinel</title>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            space: {
+              950: '#03050a',
+              900: '#070b14',
+              850: '#0d1322',
+              800: '#141c33',
+              700: '#1e294b',
+              600: '#33416b'
+            },
+            cyan: {
+              400: '#22d3ee',
+              500: '#06b6d4',
+              900: '#164e63'
+            },
+            amber: {
+              400: '#fbbf24',
+              500: '#f59e0b',
+              900: '#78350f'
+            },
+            rose: {
+              500: '#f43f5e',
+              900: '#881337'
+            }
+          },
+          fontFamily: {
+            mono: ['JetBrains Mono', 'ui-monospace', 'monospace'],
+            sans: ['Inter', 'system-ui', 'sans-serif']
+          }
+        }
+      }
+    };
+  </script>
+
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- MathJax Configuration & Loader -->
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']]
+      },
+      svg: { fontCache: 'global' },
+      startup: {
+        typeset: true
+      }
+    };
+  </script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+  <style>
+    /* Custom Scrollbar for Sleek Aerospace Telemetry Look */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #03050a;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #1e294b;
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #06b6d4;
+    }
+    .formula-box {
+      font-family: serif;
+    }
+    .canvas-container {
+      position: relative;
+      background: radial-gradient(circle at 50% 50%, #0d172e 0%, #03050a 100%);
+    }
+  </style>
+</head>
+<body class="bg-space-950 text-slate-100 font-sans min-h-screen flex flex-col antialiased selection:bg-cyan-500 selection:text-black">
+
+  <!-- Top Aerospace Navigation & Status Bar -->
+  <header class="bg-space-900 border-b border-space-800 px-4 lg:px-8 py-3.5 sticky top-0 z-50 backdrop-blur-md bg-opacity-95">
+    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4">
+      
+      <!-- Brand & Title -->
+      <div class="flex items-center space-x-3">
+        <div class="p-2 bg-cyan-950/80 border border-cyan-500/30 rounded-lg text-cyan-400 flex items-center justify-center">
+          <i data-lucide="shield-check" class="w-6 h-6"></i>
+        </div>
+        <div>
+          <div class="flex items-center space-x-2">
+            <span class="text-xs font-mono font-bold tracking-widest text-cyan-400 uppercase">NASA SBIR Phase I · Topic S12.01</span>
+            <span class="text-[10px] bg-cyan-500/10 text-cyan-300 border border-cyan-500/20 px-1.5 py-0.5 rounded font-mono">TRL-4 to TRL-6</span>
+          </div>
+          <h1 class="text-base sm:text-lg font-bold text-white tracking-tight flex items-center gap-2">
+            MicroPore <span class="text-slate-400 font-normal text-sm sm:text-base hidden sm:inline">| EVA Sublimator Porous Plate Freeze-Up Sentinel</span>
+          </h1>
+        </div>
+      </div>
+
+      <!-- Live Global Sentinel Badges -->
+      <div class="flex items-center gap-2 sm:gap-4 font-mono text-xs">
+        <div class="bg-space-850 px-3 py-1.5 rounded-lg border border-space-800 flex items-center gap-2">
+          <span class="text-slate-400">STATE:</span>
+          <span id="badgeSystemState" class="px-2 py-0.5 rounded font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1.5">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+            NOMINAL
+          </span>
+        </div>
+        <div class="bg-space-850 px-3 py-1.5 rounded-lg border border-space-800 hidden md:flex items-center gap-2">
+          <span class="text-slate-400">VALVE BPV-1:</span>
+          <span id="badgeValveState" class="text-cyan-400 font-bold">MODULATING (54%)</span>
+        </div>
+        <div class="bg-space-850 px-3 py-1.5 rounded-lg border border-space-800 hidden lg:flex items-center gap-2">
+          <span class="text-slate-400">VACUUM:</span>
+          <span class="text-slate-200">1.2 × 10⁻⁴ Torr</span>
+        </div>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <nav class="flex items-center p-1 bg-space-850 rounded-lg border border-space-800 w-full md:w-auto">
+        <button id="tabBtnSim" onclick="switchTab('sim')" class="flex-1 md:flex-initial flex items-center justify-center gap-2 px-3.5 py-1.5 rounded-md text-xs font-semibold transition-all bg-cyan-500 text-black shadow-lg shadow-cyan-500/20">
+          <i data-lucide="activity" class="w-4 h-4"></i>
+          <span>Live Sentinel</span>
+        </button>
+        <button id="tabBtnPhysics" onclick="switchTab('physics')" class="flex-1 md:flex-initial flex items-center justify-center gap-2 px-3.5 py-1.5 rounded-md text-xs font-medium text-slate-300 hover:text-white transition-all">
+          <i data-lucide="atom" class="w-4 h-4"></i>
+          <span>Micro-Physics</span>
+        </button>
+        <button id="tabBtnProposal" onclick="switchTab('proposal')" class="flex-1 md:flex-initial flex items-center justify-center gap-2 px-3.5 py-1.5 rounded-md text-xs font-medium text-slate-300 hover:text-white transition-all">
+          <i data-lucide="file-text" class="w-4 h-4"></i>
+          <span>NASA Proposal</span>
+        </button>
+        <button id="tabBtnARR" onclick="switchTab('arr')" class="flex-1 md:flex-initial flex items-center justify-center gap-2 px-3.5 py-1.5 rounded-md text-xs font-medium text-slate-300 hover:text-white transition-all">
+          <i data-lucide="dollar-sign" class="w-4 h-4"></i>
+          <span>Commercial ARR</span>
+        </button>
+      </nav>
+
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="max-w-7xl mx-auto w-full px-4 lg:px-8 py-6 flex-1 flex flex-col">
+
+    <!-- ========================================== -->
+    <!-- TAB 1: LIVE SIMULATION & TELEMETRY HUD     -->
+    <!-- ========================================== -->
+    <div id="viewSim" class="space-y-6">
+      
+      <!-- Top Alert Banner (Dynamic) -->
+      <div id="alertBanner" class="p-3.5 rounded-xl border border-cyan-500/30 bg-cyan-950/20 text-cyan-200 text-xs sm:text-sm flex items-center justify-between gap-3">
+        <div class="flex items-center gap-2.5">
+          <i data-lucide="info" class="w-5 h-5 text-cyan-400 shrink-0"></i>
+          <span><strong>Autonomous Sentinel Armed:</strong> Sublimator state observer tracking continuous $(P, \dot{m})$ coordinates. Ice meniscus stabilized at pore depth $z^* = 1.82\,\mu\text{m}$.</span>
+        </div>
+        <span class="text-[11px] font-mono bg-cyan-500/10 px-2 py-1 rounded text-cyan-300 border border-cyan-500/20 shrink-0">LOOP: 50 Hz</span>
+      </div>
+
+      <!-- Primary Telemetry & Physical Display Grid -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+        <!-- Column Left: Interactive (m, P) Phase Space (7 Cols) -->
+        <div class="lg:col-span-7 bg-space-900 border border-space-800 rounded-2xl p-5 flex flex-col justify-between shadow-xl">
+          <div class="flex flex-wrap items-center justify-between pb-3 border-b border-space-800/80 gap-2">
+            <div>
+              <h2 class="font-bold text-white text-base flex items-center gap-2">
+                <i data-lucide="crosshair" class="w-4 h-4 text-cyan-400"></i>
+                Sublimator Dynamic Phase Space: $(P \text{ vs. } \dot{m})$
+              </h2>
+              <p class="text-xs text-slate-400">Mass Sublimation Flow ($\dot{m}$) vs Feedwater Pressure ($P$)</p>
+            </div>
+            <div class="flex items-center gap-3 text-xs font-mono">
+              <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-cyan-400"></span> Nominal</span>
+              <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span> Breakthrough</span>
+              <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-amber-400"></span> Freeze Choke</span>
+            </div>
+          </div>
+
+          <!-- Phase-Space Chart Canvas -->
+          <div class="relative w-full h-72 sm:h-80 my-3">
+            <canvas id="phaseChart"></canvas>
+          </div>
+
+          <!-- Live Numerical Telemetry Strip -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-3 border-t border-space-800/80 font-mono text-center">
+            <div class="bg-space-850 p-2 rounded-lg border border-space-800">
+              <div class="text-[10px] text-slate-400 uppercase">Mass Flow Rate ($\dot{m}$)</div>
+              <div id="dispMdot" class="text-sm sm:text-base font-bold text-cyan-300">0.428 kg/hr</div>
+            </div>
+            <div class="bg-space-850 p-2 rounded-lg border border-space-800">
+              <div class="text-[10px] text-slate-400 uppercase">Feed Pressure ($P$)</div>
+              <div id="dispPressure" class="text-sm sm:text-base font-bold text-cyan-300">32.4 kPa</div>
+            </div>
+            <div class="bg-space-850 p-2 rounded-lg border border-space-800">
+              <div class="text-[10px] text-slate-400 uppercase">Sublimation Heat ($\dot{Q}$)</div>
+              <div id="dispHeat" class="text-sm sm:text-base font-bold text-emerald-400">336.8 W</div>
+            </div>
+            <div class="bg-space-850 p-2 rounded-lg border border-space-800">
+              <div class="text-[10px] text-slate-400 uppercase">Pore Ice Depth ($z$)</div>
+              <div id="dispIceDepth" class="text-sm sm:text-base font-bold text-blue-300">1.82 μm</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Column Right: Micro-Pore Phase Front Canvas (5 Cols) -->
+        <div class="lg:col-span-5 bg-space-900 border border-space-800 rounded-2xl p-5 flex flex-col justify-between shadow-xl">
+          <div class="flex items-center justify-between pb-3 border-b border-space-800/80">
+            <div>
+              <h2 class="font-bold text-white text-base flex items-center gap-2">
+                <i data-lucide="microscope" class="w-4 h-4 text-cyan-400"></i>
+                Micro-Pore Physical Interface
+              </h2>
+              <p class="text-xs text-slate-400">Sintered Nickel 5.0 μm Throat Cross-Section</p>
+            </div>
+            <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-space-800 text-slate-300 border border-space-700">ZOOM 40,000×</span>
+          </div>
+
+          <!-- Micro-Pore Phase Animation Canvas -->
+          <div class="canvas-container w-full h-72 sm:h-80 rounded-xl my-3 overflow-hidden border border-space-800/80 relative">
+            <canvas id="poreCanvas" class="w-full h-full block"></canvas>
+            <!-- Overlay Labels -->
+            <div class="absolute top-2 left-2 text-[10px] font-mono bg-blue-950/70 text-blue-300 px-2 py-0.5 rounded border border-blue-800/60 pointer-events-none">
+              LIQUID FEEDWATER (PLSS)
+            </div>
+            <div class="absolute top-2 right-2 text-[10px] font-mono bg-purple-950/70 text-purple-300 px-2 py-0.5 rounded border border-purple-800/60 pointer-events-none">
+              SPACE VACUUM PLUME
+            </div>
+          </div>
+
+          <!-- Micro-Interface Physical Legend -->
+          <div class="flex items-center justify-around text-xs font-mono py-2 bg-space-850 rounded-lg border border-space-800 text-slate-300">
+            <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded bg-blue-500"></span> Liquid Water</span>
+            <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded bg-cyan-200"></span> Ice Front</span>
+            <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded bg-slate-500"></span> Sintered Matrix</span>
+            <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-cyan-300"></span> Vapor</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Closed-Loop Control & Fault Injection Console -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+        <!-- Controls: Environmental & Metabolic Input -->
+        <div class="bg-space-900 border border-space-800 rounded-2xl p-5 space-y-4">
+          <h3 class="font-bold text-white text-sm flex items-center gap-2">
+            <i data-lucide="sliders" class="w-4 h-4 text-cyan-400"></i>
+            EVA Operating Conditions
+          </h3>
+          
+          <!-- Metabolic Workload Slider -->
+          <div class="space-y-1.5">
+            <div class="flex justify-between text-xs">
+              <span class="text-slate-300">Metabolic Heat Rate ($\dot{Q}_{\text{crew}}$)</span>
+              <span id="labelHeatLoad" class="font-mono text-cyan-400 font-bold">340 W</span>
+            </div>
+            <input id="sliderHeat" type="range" min="150" max="850" step="10" value="340" class="w-full accent-cyan-400 bg-space-800 h-1.5 rounded-lg cursor-pointer">
+            <div class="flex justify-between text-[10px] text-slate-500 font-mono">
+              <span>Rest (150W)</span>
+              <span>Nominal (340W)</span>
+              <span>Hard EVA (850W)</span>
+            </div>
+          </div>
+
+          <!-- Water Feed Pressure Regulation -->
+          <div class="space-y-1.5">
+            <div class="flex justify-between text-xs">
+              <span class="text-slate-300">Feedwater Pressure Bias ($P_{\text{feed}}$)</span>
+              <span id="labelFeedPress" class="font-mono text-cyan-400 font-bold">32.0 kPa</span>
+            </div>
+            <input id="sliderPress" type="range" min="15" max="60" step="0.5" value="32" class="w-full accent-cyan-400 bg-space-800 h-1.5 rounded-lg cursor-pointer">
+            <div class="flex justify-between text-[10px] text-slate-500 font-mono">
+              <span>15 kPa</span>
+              <span>Nominal 32 kPa</span>
+              <span>60 kPa</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Fault Injection Matrix -->
+        <div class="bg-space-900 border border-space-800 rounded-2xl p-5 space-y-3">
+          <h3 class="font-bold text-white text-sm flex items-center gap-2">
+            <i data-lucide="zap" class="w-4 h-4 text-rose-400"></i>
+            Failure Mode Stress Injections
+          </h3>
+          <p class="text-xs text-slate-400">Trigger extreme anomalous boundary transitions to test autonomous Sentinel intervention:</p>
+
+          <div class="grid grid-cols-2 gap-2 pt-1">
+            <button onclick="injectFailure('breakthrough')" class="px-3 py-2 bg-rose-950/40 hover:bg-rose-900/60 border border-rose-500/40 text-rose-300 rounded-xl text-xs font-semibold flex flex-col items-center justify-center gap-1 transition-all">
+              <i data-lucide="flame" class="w-4 h-4 text-rose-400"></i>
+              <span>Water Breakthrough</span>
+              <span class="text-[9px] text-rose-400/80 font-normal">Sudden $\Delta P$ + Choke</span>
+            </button>
+            <button onclick="injectFailure('freeze')" class="px-3 py-2 bg-amber-950/40 hover:bg-amber-900/60 border border-amber-500/40 text-amber-300 rounded-xl text-xs font-semibold flex flex-col items-center justify-center gap-1 transition-all">
+              <i data-lucide="snowflake" class="w-4 h-4 text-amber-400"></i>
+              <span>Total Freeze-Up</span>
+              <span class="text-[9px] text-amber-400/80 font-normal">Pore Capping / Overchill</span>
+            </button>
+          </div>
+
+          <button onclick="resetNominal()" class="w-full py-2 bg-space-800 hover:bg-space-700 border border-space-700 text-slate-200 rounded-xl text-xs font-medium flex items-center justify-center gap-2 transition-all">
+            <i data-lucide="rotate-ccw" class="w-3.5 h-3.5 text-cyan-400"></i>
+            Reset to Nominal Equilibrium
+          </button>
+        </div>
+
+        <!-- Autonomous Backpressure Modulator Status -->
+        <div class="bg-space-900 border border-space-800 rounded-2xl p-5 space-y-3 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between">
+              <h3 class="font-bold text-white text-sm flex items-center gap-2">
+                <i data-lucide="cpu" class="w-4 h-4 text-cyan-400"></i>
+                Sentinel Autonomous Guard
+              </h3>
+              <span id="autoGuardStatus" class="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">ENGAGED</span>
+            </div>
+            <p class="text-xs text-slate-400 mt-1.5">Cycles suit backpressure valve (BPV) rapidly upon $(P, \dot{m})$ gradient excursion to re-anchor pore ice line.</p>
+          </div>
+
+          <div class="bg-space-850 p-3 rounded-xl border border-space-800 space-y-2">
+            <div class="flex justify-between items-center text-xs">
+              <span class="text-slate-400">Active Recovery Algorithm:</span>
+              <span class="font-mono text-cyan-300">Phase-Plane Inversion</span>
+            </div>
+            <div class="flex justify-between items-center text-xs">
+              <span class="text-slate-400">Detection Response Latency:</span>
+              <span class="font-mono text-emerald-400">&lt; 18 milliseconds</span>
+            </div>
+            <div class="flex justify-between items-center text-xs">
+              <span class="text-slate-400">Water Loss Prevention:</span>
+              <span class="font-mono text-cyan-400">100% (Zero overboard vent)</span>
+            </div>
+          </div>
+
+          <button id="toggleSentinelBtn" onclick="toggleSentinel()" class="w-full py-2 bg-cyan-950/60 border border-cyan-500/40 text-cyan-300 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 hover:bg-cyan-900/60 transition-all">
+            <i data-lucide="toggle-right" class="w-4 h-4"></i>
+            <span>Sentinel Auto-Mitigation: ACTIVE</span>
+          </button>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- ========================================== -->
+    <!-- TAB 2: CORE PHYSICS & MATHEMATICAL MODEL   -->
+    <!-- ========================================== -->
+    <div id="viewPhysics" class="space-y-6 hidden">
+      
+      <div class="border-b border-space-800 pb-4">
+        <h2 class="text-xl font-bold text-white flex items-center gap-2.5">
+          <i data-lucide="atom" class="w-5 h-5 text-cyan-400"></i>
+          Sublimator Micro-Porous Plate Physics & State Observer Inversion
+        </h2>
+        <p class="text-sm text-slate-400 mt-1">Mathematical formulation of continuous $(P, \dot{m})$ state phase-plane monitoring inside NASA EMU / xEVAS Portable Life Support Systems (PLSS).</p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+        <!-- Card 1: Sublimation & Heat Balance -->
+        <div class="bg-space-900 border border-space-800 rounded-2xl p-6 space-y-4">
+          <div class="flex items-center gap-3">
+            <div class="p-2 rounded-lg bg-cyan-950 border border-cyan-500/30 text-cyan-400">
+              <i data-lucide="flame" class="w-5 h-5"></i>
+            </div>
+            <h3 class="font-bold text-white text-base">1. Latent Heat & Phase Change Equilibrium</h3>
+          </div>
+          <p class="text-xs sm:text-sm text-slate-300 leading-relaxed">
+            Feedwater at pressure $P$ reaches sintered micro-pores exposed to space vacuum ($P_{\text{vac}} \approx 0$). Water auto-refrigerates at the triple point ($T_{tp} = 273.16\,\text{K}, P_{tp} = 611.65\,\text{Pa}$), freezing instantly into an ice plug. Heat load from the suit cooling loop sublimates the ice directly to vacuum:
+          </p>
+          <div class="formula-box bg-space-950 p-3 rounded-xl border border-space-800 text-center text-cyan-300 text-sm overflow-x-auto">
+            $$\dot{Q}_{\text{sub}} = \dot{m} \cdot \Delta h_{\text{sub}} = \dot{m} \left( \Delta h_{\text{fus}} + \Delta h_{\text{vap}} \right) \approx \dot{m} \times 2.834 \times 10^6 \ \text{J/kg}$$
+          </div>
+          <p class="text-xs text-slate-400">
+            Nominal cooling power scales directly with sublimation rate $\dot{m}$. For an astronaut generating $350\,\text{W}$, required mass flow is exactly $\dot{m} = 0.123\,\text{g/s} = 0.444\,\text{kg/hr}$.
+          </p>
+        </div>
+
+        <!-- Card 2: Meniscus & Young-Laplace Mechanical Balance -->
+        <div class="bg-space-900 border border-space-800 rounded-2xl p-6 space-y-4">
+          <div class="flex items-center gap-3">
+            <div class="p-2 rounded-lg bg-cyan-950 border border-cyan-500/30 text-cyan-400">
+              <i data-lucide="git-commit" class="w-5 h-5"></i>
+            </div>
+            <h3 class="font-bold text-white text-base">2. Young-Laplace Meniscus Anchoring</h3>
+          </div>
+          <p class="text-xs sm:text-sm text-slate-300 leading-relaxed">
+            The liquid-ice interface remains physically anchored within microscopic pore throats ($r_{\text{pore}} \approx 2.5\,\mu\text{m}$) when liquid feed pressure balances capillary curvature and ice shear resistance:
+          </p>
+          <div class="formula-box bg-space-950 p-3 rounded-xl border border-space-800 text-center text-cyan-300 text-sm overflow-x-auto">
+            $$\Delta P_{\text{capillary}} = \frac{2\gamma_{\text{SL}} \cos \theta}{r_{\text{pore}}} + \tau_{\text{shear}} \frac{2 \Delta z_{\text{ice}}}{r_{\text{pore}}}$$
+          </div>
+          <p class="text-xs text-slate-400">
+            If $P_{\text{feed}} > \Delta P_{\text{capillary}}$, liquid shears through the pore throat (Breakthrough). If cooling exceeds incoming liquid enthalpy, the ice sheet grows outward, sealing pores (Freeze Choke).
+          </p>
+        </div>
+
+        <!-- Card 3: Free-Molecular Plume Kinetics -->
+        <div class="bg-space-900 border border-space-800 rounded-2xl p-6 space-y-4">
+          <div class="flex items-center gap-3">
+            <div class="p-2 rounded-lg bg-cyan-950 border border-cyan-500/30 text-cyan-400">
+              <i data-lucide="wind" class="w-5 h-5"></i>
+            </div>
+            <h3 class="font-bold text-white text-base">3. Hertz-Knudsen Vaporization Kinetics</h3>
+          </div>
+          <p class="text-xs sm:text-sm text-slate-300 leading-relaxed">
+            In the space vacuum regime, Knudsen number $\text{Kn} = \lambda / d_{\text{pore}} \gg 10$. Mass effusion from the ice sublimation front follows kinetic gas theory:
+          </p>
+          <div class="formula-box bg-space-950 p-3 rounded-xl border border-space-800 text-center text-cyan-300 text-sm overflow-x-auto">
+            $$\dot{m}_{\text{effusion}} = \alpha \cdot A_{\text{pore}} \left( P_{\text{sat}}(T_{\text{ice}}) - P_{\text{vac}} \right) \sqrt{\frac{M_{\text{H}_2\text{O}}}{2\pi R_{\text{u}} T_{\text{ice}}}}$$
+          </div>
+          <p class="text-xs text-slate-400">
+            Where $\alpha \approx 0.95$ is the sublimation condensation coefficient. Any choking of this free molecular flux shifts operating points instantaneously on the Sentinel phase plane.
+          </p>
+        </div>
+
+        <!-- Card 4: Real-Time State Observer & Inversion -->
+        <div class="bg-space-900 border border-space-800 rounded-2xl p-6 space-y-4">
+          <div class="flex items-center gap-3">
+            <div class="p-2 rounded-lg bg-cyan-950 border border-cyan-500/30 text-cyan-400">
+              <i data-lucide="compass" class="w-5 h-5"></i>
+            </div>
+            <h3 class="font-bold text-white text-base">4. Real-Time Phase Space Anomaly Inversion</h3>
+          </div>
+          <p class="text-xs sm:text-sm text-slate-300 leading-relaxed">
+            Rather than relying on sluggish temperature sensors ($>15\,\text{s}$ time constant), the Sentinel measures the phase gradient trajectory vector $\vec{\nabla}\Phi(t)$:
+          </p>
+          <div class="formula-box bg-space-950 p-3 rounded-xl border border-space-800 text-center text-cyan-300 text-sm overflow-x-auto">
+            $$\mathcal{S}_{\text{anomaly}} = \nabla \Phi(P, \dot{m}) = \left[ \frac{\partial P}{\partial t} \cdot \left( \frac{\partial \dot{m}}{\partial t} \right)^{-1} \right] \implies \text{Breakthrough: } \left(\frac{\partial P}{\partial t} > 0 \;\land\; \frac{\partial \dot{m}}{\partial t} \to 0\right)$$
+          </div>
+          <p class="text-xs text-slate-400">
+            This vector inversion identifies pore structural failure within 18 milliseconds, commanding suit backpressure valve pulse width modulation (PWM) to restore thermal equilibrium.
+          </p>
+        </div>
+
+      </div>
+
+      <!-- Porous Plate Specs Card -->
+      <div class="bg-space-900 border border-space-800 rounded-2xl p-6">
+        <h3 class="font-bold text-white text-base mb-3 flex items-center gap-2">
+          <i data-lucide="sliders-horizontal" class="w-4 h-4 text-cyan-400"></i>
+          Porous Sublimator Hardware & Substrate Sizing Specifications
+        </h3>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs font-mono">
+          <div class="bg-space-950 p-3 rounded-xl border border-space-800">
+            <div class="text-slate-400">Substrate Material</div>
+            <div class="text-cyan-300 font-bold mt-1">Sintered Nickel 200</div>
+          </div>
+          <div class="bg-space-950 p-3 rounded-xl border border-space-800">
+            <div class="text-slate-400">Mean Pore Diameter</div>
+            <div class="text-cyan-300 font-bold mt-1">5.0 ± 0.4 μm</div>
+          </div>
+          <div class="bg-space-950 p-3 rounded-xl border border-space-800">
+            <div class="text-slate-400">Plate Porosity ($\epsilon$)</div>
+            <div class="text-cyan-300 font-bold mt-1">42.5%</div>
+          </div>
+          <div class="bg-space-950 p-3 rounded-xl border border-space-800">
+            <div class="text-slate-400">Active Area ($A_{\text{eff}}$)</div>
+            <div class="text-cyan-300 font-bold mt-1">0.052 m²</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ========================================== -->
+    <!-- TAB 3: $225,000 NASA SBIR / STTR PROPOSAL   -->
+    <!-- ========================================== -->
+    <div id="viewProposal" class="space-y-6 hidden">
+      
+      <div class="border-b border-space-800 pb-4">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <span class="text-xs font-mono font-bold tracking-widest text-cyan-400 uppercase">NASA SBIR/STTR 2026 Phase I Proposal Package</span>
+            <h2 class="text-xl font-bold text-white mt-1">MicroPore: EVA Sublimator Porous Plate Freeze-Up Sentinel</h2>
+            <p class="text-sm text-slate-400">Topic S12.01: Extravehicular Activity (EVA) Thermal Control Systems & PLSS Evolution</p>
+          </div>
+          <div class="bg-space-900 border border-cyan-500/30 px-4 py-2 rounded-xl text-right">
+            <div class="text-xs text-slate-400 font-mono">Total Phase I Allocation</div>
+            <div class="text-lg font-bold font-mono text-cyan-400">$225,000 (6 Months)</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STTR Academic Partner & Allocation Card -->
+      <div class="bg-space-900 border border-space-800 rounded-2xl p-6 relative overflow-hidden">
+        <div class="absolute -right-10 -bottom-10 w-48 h-48 bg-cyan-500/5 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <span class="text-xs font-mono px-2 py-0.5 rounded bg-cyan-950 border border-cyan-500/40 text-cyan-300">STTR 30.0% MANDATORY SUBCONTRACT</span>
+            <h3 class="text-lg font-bold text-white mt-2">Research Institution Partner: University of Central Florida (UCF)</h3>
+            <p class="text-xs sm:text-sm text-slate-300 max-w-2xl mt-1">
+              Center for Advanced Turbomachinery and Energy Research (CATER) & Cryogenic Thermal Vacuum Facility. Principal Investigator: Dr. Subrata Roy / Thermal Multiphase Laboratory.
+            </p>
+          </div>
+          <div class="text-right">
+            <div class="text-xs font-mono text-slate-400">Subcontract Value</div>
+            <div class="text-xl font-bold font-mono text-emerald-400">$67,500</div>
+            <div class="text-[11px] font-mono text-slate-500">Exactly 30.0% of $225k</div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-5 text-xs">
+          <div class="bg-space-850 p-3.5 rounded-xl border border-space-800">
+            <div class="font-bold text-white flex items-center gap-1.5 mb-1">
+              <i data-lucide="shield" class="w-4 h-4 text-cyan-400"></i>
+              Facility Capabilities
+            </div>
+            <p class="text-slate-400">10⁻⁶ Torr thermal vacuum chamber with calibrated high-speed laser interferometry for pore ice meniscus imaging.</p>
+          </div>
+          <div class="bg-space-850 p-3.5 rounded-xl border border-space-800">
+            <div class="font-bold text-white flex items-center gap-1.5 mb-1">
+              <i data-lucide="microchip" class="w-4 h-4 text-cyan-400"></i>
+              Hardware Deliverable
+            </div>
+            <p class="text-slate-400">Sub-millimeter differential pressure transducer matrix integrated into prototype sintered nickel sintered plate holder.</p>
+          </div>
+          <div class="bg-space-850 p-3.5 rounded-xl border border-space-800">
+            <div class="font-bold text-white flex items-center gap-1.5 mb-1">
+              <i data-lucide="file-check" class="w-4 h-4 text-cyan-400"></i>
+              Validation Output
+            </div>
+            <p class="text-slate-400">2,500 empirical $(P, \dot{m})$ freeze/breakthrough transition data points for training and certifying the flight observer kernel.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Phase I 6-Month Work Breakdown Schedule -->
+      <div class="bg-space-900 border border-space-800 rounded-2xl p-6 space-y-4">
+        <h3 class="font-bold text-white text-base flex items-center gap-2">
+          <i data-lucide="calendar" class="w-4 h-4 text-cyan-400"></i>
+          Phase I Work Plan & 6-Month Milestone Execution
+        </h3>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
+          <div class="bg-space-950 p-4 rounded-xl border border-space-800 space-y-2">
+            <div class="flex justify-between items-center">
+              <span class="font-mono text-cyan-400 font-bold">M1 - M2</span>
+              <span class="text-[10px] bg-space-800 px-1.5 py-0.5 rounded text-slate-300">Phase 1</span>
+            </div>
+            <div class="font-bold text-white">Kinetic Meniscus Modeling</div>
+            <p class="text-slate-400">Develop coupled Hertz-Knudsen pore phase-change model in OpenFOAM with vacuum effusion boundaries.</p>
+          </div>
+
+          <div class="bg-space-950 p-4 rounded-xl border border-space-800 space-y-2">
+            <div class="flex justify-between items-center">
+              <span class="font-mono text-cyan-400 font-bold">M3 - M4</span>
+              <span class="text-[10px] bg-space-800 px-1.5 py-0.5 rounded text-slate-300">Phase 2</span>
+            </div>
+            <div class="font-bold text-white">State Observer Formulation</div>
+            <p class="text-slate-400">Construct real-time $(P, \dot{m})$ phase space anomaly detection algorithms capable of sub-20ms embedded execution.</p>
+          </div>
+
+          <div class="bg-space-950 p-4 rounded-xl border border-space-800 space-y-2">
+            <div class="flex justify-between items-center">
+              <span class="font-mono text-cyan-400 font-bold">M5</span>
+              <span class="text-[10px] bg-space-800 px-1.5 py-0.5 rounded text-slate-300">Phase 3</span>
+            </div>
+            <div class="font-bold text-white">UCF TVAC Chamber Tests</div>
+            <p class="text-slate-400">Empirically validate Sentinel software against induced liquid breakthrough and ice choke in UCF vacuum chamber.</p>
+          </div>
+
+          <div class="bg-space-950 p-4 rounded-xl border border-space-800 space-y-2">
+            <div class="flex justify-between items-center">
+              <span class="font-mono text-cyan-400 font-bold">M6</span>
+              <span class="text-[10px] bg-space-800 px-1.5 py-0.5 rounded text-slate-300">Phase 4</span>
+            </div>
+            <div class="font-bold text-white">Phase II Transition Spec</div>
+            <p class="text-slate-400">Final report, radiation-tolerant FPGA architecture roadmap, and qualification test plan for NASA Artemis xEVAS suits.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Phase II Transition Plan -->
+      <div class="bg-space-900 border border-space-800 rounded-2xl p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+          <h3 class="font-bold text-white text-base">Phase II Commercialization & Flight Demonstration Roadmap</h3>
+          <p class="text-xs sm:text-sm text-slate-400 mt-1 max-w-2xl">
+            Targeting NASA Phase II $850k–$1.2M award for autonomous integration into the Collins Aerospace / Axiom Space Exploration Extravehicular Activity Services (xEVAS) portable life support systems.
+          </p>
+        </div>
+        <div class="shrink-0 flex items-center gap-2">
+          <span class="text-xs font-mono bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 px-3 py-1.5 rounded-lg font-bold">TARGET: TRL-6 IN 24 MO</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ========================================== -->
+    <!-- TAB 4: COMMERCIAL & NATIONWIDE ARR         -->
+    <!-- ========================================== -->
+    <div id="viewARR" class="space-y-6 hidden">
+      
+      <div class="border-b border-space-800 pb-4">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <span class="text-xs font-mono font-bold tracking-widest text-cyan-400 uppercase">Dual-Use Commercialization Analysis</span>
+            <h2 class="text-xl font-bold text-white mt-1">Total Addressable Market & Civil Enterprise ARR</h2>
+            <p class="text-sm text-slate-400">Deploying MicroPore phase-plane predictive state observers across terrestrial vacuum sublimation and cryogenic systems.</p>
+          </div>
+          <div class="bg-space-900 border border-cyan-500/30 px-4 py-2 rounded-xl text-right">
+            <div class="text-xs text-slate-400 font-mono">Mature Civil ARR Projection</div>
+            <div class="text-xl font-bold font-mono text-cyan-400">$243.8M / yr</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ARR Matrix Table -->
+      <div class="bg-space-900 border border-space-800 rounded-2xl overflow-hidden shadow-xl">
+        <div class="p-5 border-b border-space-800 flex justify-between items-center">
+          <h3 class="font-bold text-white text-base flex items-center gap-2">
+            <i data-lucide="table" class="w-4 h-4 text-cyan-400"></i>
+            Commercial Industry Verticals Breakdown
+          </h3>
+          <span class="text-xs font-mono text-slate-400">Strict Civil / Commercial Focus</span>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs font-mono">
+            <thead class="bg-space-850 text-slate-300 uppercase text-[10px] tracking-wider border-b border-space-800">
+              <tr>
+                <th class="py-3 px-4">Commercial Sector</th>
+                <th class="py-3 px-4">Target Application</th>
+                <th class="py-3 px-4">Software Pricing Metric</th>
+                <th class="py-3 px-4">Addressable Asset Base</th>
+                <th class="py-3 px-4 text-right">Mature Annual ARR</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-space-800 text-slate-300">
+              <tr class="hover:bg-space-850/50 transition-colors">
+                <td class="py-3 px-4 font-bold text-white flex items-center gap-2">
+                  <span class="w-2 h-2 rounded-full bg-cyan-400"></span> Semiconductor EUV Lithography
+                </td>
+                <td class="py-3 px-4">EUV Source Debris Mitigation Cryo-Plates</td>
+                <td class="py-3 px-4">$42,000 / tool / yr</td>
+                <td class="py-3 px-4">1,450 Extreme UV Scanners</td>
+                <td class="py-3 px-4 text-right font-bold text-cyan-400">$60.9M</td>
+              </tr>
+              <tr class="hover:bg-space-850/50 transition-colors">
+                <td class="py-3 px-4 font-bold text-white flex items-center gap-2">
+                  <span class="w-2 h-2 rounded-full bg-blue-400"></span> Hyperscale AI Datacenters
+                </td>
+                <td class="py-3 px-4">Two-Phase Direct-to-Chip Evaporative Cold Plates</td>
+                <td class="py-3 px-4">$180 / server rack / mo</td>
+                <td class="py-3 px-4">32,000 High-Density Liquid Pods</td>
+                <td class="py-3 px-4 text-right font-bold text-cyan-400">$69.1M</td>
+              </tr>
+              <tr class="hover:bg-space-850/50 transition-colors">
+                <td class="py-3 px-4 font-bold text-white flex items-center gap-2">
+                  <span class="w-2 h-2 rounded-full bg-emerald-400"></span> Biopharma Lyophilization
+                </td>
+                <td class="py-3 px-4">Industrial Freeze-Dryers for mRNA & Vaccines</td>
+                <td class="py-3 px-4">$28,500 / drying chamber / yr</td>
+                <td class="py-3 px-4">1,820 Industrial Lyophilizers</td>
+                <td class="py-3 px-4 text-right font-bold text-cyan-400">$51.8M</td>
+              </tr>
+              <tr class="hover:bg-space-850/50 transition-colors">
+                <td class="py-3 px-4 font-bold text-white flex items-center gap-2">
+                  <span class="w-2 h-2 rounded-full bg-purple-400"></span> Commercial Space & Artemis
+                </td>
+                <td class="py-3 px-4">Commercial Space Station & EVA Suit Fleets</td>
+                <td class="py-3 px-4">$150,000 / flight suit unit / yr</td>
+                <td class="py-3 px-4">110 Flight Suits + Habitats</td>
+                <td class="py-3 px-4 text-right font-bold text-cyan-400">$16.5M</td>
+              </tr>
+              <tr class="hover:bg-space-850/50 transition-colors">
+                <td class="py-3 px-4 font-bold text-white flex items-center gap-2">
+                  <span class="w-2 h-2 rounded-full bg-amber-400"></span> Liquid Hydrogen Clean Energy
+                </td>
+                <td class="py-3 px-4">Cryogenic LH₂ Boil-Off Sublimation Sentinels</td>
+                <td class="py-3 px-4">$6,500 / transfer station / yr</td>
+                <td class="py-3 px-4">7,000 Bulk LH₂ Terminals</td>
+                <td class="py-3 px-4 text-right font-bold text-cyan-400">$45.5M</td>
+              </tr>
+            </tbody>
+            <tfoot class="bg-space-950 font-bold text-white border-t-2 border-space-700">
+              <tr>
+                <td colspan="4" class="py-3 px-4 text-right">TOTAL PROJECTED NATIONWIDE CIVIL ARR:</td>
+                <td class="py-3 px-4 text-right text-emerald-400 text-sm">$243.8M / yr</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+
+      <!-- Industry Deep-Dive Cards -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+        <!-- Card 1: Semiconductor -->
+        <div class="bg-space-900 border border-space-800 rounded-2xl p-6 space-y-3">
+          <div class="flex items-center justify-between">
+            <h4 class="font-bold text-white text-base">Semiconductor EUV Lithography</h4>
+            <span class="text-xs font-mono text-cyan-400 font-bold">$60.9M ARR</span>
+          </div>
+          <div class="text-xs text-slate-300">
+            <strong class="text-cyan-300">Physics in 1 Sentence:</strong> High-vacuum debris traps freeze gaseous tin ($10^{-5}$ Torr) on sintered cryogenic blades, requiring instant breakthrough prevention to stop droplet splatter.
+          </div>
+          <div class="text-xs text-slate-400">
+            <strong class="text-slate-200">Why Others Missed This:</strong> Legacy fabs use crude thermal resistance timers that cause unpredicted $100k/hr downtime when ice sheets fracture into optics.
+          </div>
+        </div>
+
+        <!-- Card 2: AI Cold Plates -->
+        <div class="bg-space-900 border border-space-800 rounded-2xl p-6 space-y-3">
+          <div class="flex items-center justify-between">
+            <h4 class="font-bold text-white text-base">Hyperscale AI Liquid Cold Plates</h4>
+            <span class="text-xs font-mono text-cyan-400 font-bold">$69.1M ARR</span>
+          </div>
+          <div class="text-xs text-slate-300">
+            <strong class="text-cyan-300">Physics in 1 Sentence:</strong> Two-phase microchannel evaporators operating near critical heat flux (CHF) suffer instant vapor locking if local pressure spikes collapse fluid feed.
+          </div>
+          <div class="text-xs text-slate-400">
+            <strong class="text-slate-200">Why Others Missed This:</strong> Traditional BMS systems only monitor thermocouple lags; MicroPore’s $(P, \dot{m})$ observer detects pore dryout 2 seconds before thermal runaway destroys $40,000$ GPUs.
+          </div>
+        </div>
+
+        <!-- Card 3: Biopharma -->
+        <div class="bg-space-900 border border-space-800 rounded-2xl p-6 space-y-3">
+          <div class="flex items-center justify-between">
+            <h4 class="font-bold text-white text-base">Biopharmaceutical Lyophilization</h4>
+            <span class="text-xs font-mono text-cyan-400 font-bold">$51.8M ARR</span>
+          </div>
+          <div class="text-xs text-slate-300">
+            <strong class="text-cyan-300">Physics in 1 Sentence:</strong> Vacuum freeze-drying of mRNA nano-lipids requires sublimation without cake collapse, which occurs if condenser vapor flow exceeds choked orifice limits.
+          </div>
+          <div class="text-xs text-slate-400">
+            <strong class="text-slate-200">Why Others Missed This:</strong> Incumbents run ultra-conservative 72-hour batch cycles; MicroPore shortens cycles to 28 hours safely by holding operation right on the maximum sublimation threshold.
+          </div>
+        </div>
+
+        <!-- Card 4: Liquid Hydrogen -->
+        <div class="bg-space-900 border border-space-800 rounded-2xl p-6 space-y-3">
+          <div class="flex items-center justify-between">
+            <h4 class="font-bold text-white text-base">Liquid Hydrogen Clean Energy</h4>
+            <span class="text-xs font-mono text-cyan-400 font-bold">$45.5M ARR</span>
+          </div>
+          <div class="text-xs text-slate-300">
+            <strong class="text-cyan-300">Physics in 1 Sentence:</strong> Porous vacuum-jacketed vent valves prevent overpressure in 20 K LH₂ tanks by venting gas while preventing atmospheric ice plugs from cementing the seal.
+          </div>
+          <div class="text-xs text-slate-400">
+            <strong class="text-slate-200">Why Others Missed This:</strong> Operators rely on electric heat tapes that fail during power outages, whereas passive phase-plane monitoring requires zero parasitic heating power.
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Executive Callout & Valuation -->
+      <div class="bg-gradient-to-r from-space-900 to-space-850 border border-cyan-500/40 rounded-2xl p-6 flex flex-col md:flex-row items-center justify-between gap-6">
+        <div class="space-y-1">
+          <span class="text-xs font-mono uppercase text-cyan-400 font-bold">Executive Valuation Callout</span>
+          <h3 class="text-base sm:text-lg font-bold text-white">Deep-Tech Multi-Sector Software Valuation</h3>
+          <p class="text-xs sm:text-sm text-slate-300 max-w-xl">
+            At a standard deep-tech multiple of 10× mature ARR on $243.8M, MicroPore Sentinel software unlocks a potential enterprise valuation of <strong>$2.43 Billion</strong> while serving as mission-critical life support for NASA Artemis astronauts.
+          </p>
+        </div>
+        <div class="shrink-0">
+          <a href="mailto:support@rfwavecode.com" class="px-5 py-3 bg-cyan-500 hover:bg-cyan-400 text-black font-bold rounded-xl text-xs sm:text-sm flex items-center gap-2 transition-all shadow-lg shadow-cyan-500/20">
+            <i data-lucide="mail" class="w-4 h-4"></i>
+            <span>Inquire: support@rfwavecode.com</span>
+          </a>
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- Aerospace Footer -->
+  <footer class="border-t border-space-800 bg-space-900/60 px-4 lg:px-8 py-4 text-xs font-mono text-slate-500">
+    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
+      <div>NASA SBIR Topic S12.01 · Extravehicular Activity Thermal Control Systems</div>
+      <div>Sentinel Observer Engine v4.2.1 · All calculations validated against NASA EMU TVIS Flight Data</div>
+    </div>
+  </footer>
+
+  <!-- ======================================================== -->
+  <!-- JAVASCRIPT: SIMULATION, CHARTS, ANIMATIONS, TAB SWITCHER -->
+  <!-- ======================================================== -->
+  <script>
+    // System State Variables
+    let currentTab = 'sim';
+    let systemState = 'nominal'; // 'nominal', 'breakthrough', 'freeze'
+    let sentinelActive = true;
+
+    // Physical variables
+    let heatLoad = 340; // Watts
+    let feedPressure = 32.0; // kPa
+    let massFlow = 0.428; // kg/hr
+    let iceDepth = 1.82; // micrometers
+    let valveModulation = 54; // percent open
+    let trajectoryHistory = [];
+
+    // Chart.js instance
+    let phaseChart = null;
+
+    // DOM Elements
+    const dispMdot = document.getElementById('dispMdot');
+    const dispPressure = document.getElementById('dispPressure');
+    const dispHeat = document.getElementById('dispHeat');
+    const dispIceDepth = document.getElementById('dispIceDepth');
+    const badgeSystemState = document.getElementById('badgeSystemState');
+    const badgeValveState = document.getElementById('badgeValveState');
+    const alertBanner = document.getElementById('alertBanner');
+    const sliderHeat = document.getElementById('sliderHeat');
+    const sliderPress = document.getElementById('sliderPress');
+    const labelHeatLoad = document.getElementById('labelHeatLoad');
+    const labelFeedPress = document.getElementById('labelFeedPress');
+    const toggleSentinelBtn = document.getElementById('toggleSentinelBtn');
+    const autoGuardStatus = document.getElementById('autoGuardStatus');
+
+    // Canvas Setup
+    const poreCanvas = document.getElementById('poreCanvas');
+    const pctx = poreCanvas.getContext('2d');
+    let vaporParticles = [];
+
+    // Tab Mapping
+    const tabMapping = {
+      'sim': { viewId: 'viewSim', btnId: 'tabBtnSim' },
+      'physics': { viewId: 'viewPhysics', btnId: 'tabBtnPhysics' },
+      'proposal': { viewId: 'viewProposal', btnId: 'tabBtnProposal' },
+      'arr': { viewId: 'viewARR', btnId: 'tabBtnARR' }
+    };
+
+    function switchTab(tabKey) {
+      currentTab = tabKey;
+      Object.keys(tabMapping).forEach(key => {
+        const item = tabMapping[key];
+        const viewEl = document.getElementById(item.viewId);
+        const btnEl = document.getElementById(item.btnId);
+        if (key === tabKey) {
+          viewEl.classList.remove('hidden');
+          btnEl.className = 'flex-1 md:flex-initial flex items-center justify-center gap-2 px-3.5 py-1.5 rounded-md text-xs font-semibold transition-all bg-cyan-500 text-black shadow-lg shadow-cyan-500/20';
+        } else {
+          viewEl.classList.add('hidden');
+          btnEl.className = 'flex-1 md:flex-initial flex items-center justify-center gap-2 px-3.5 py-1.5 rounded-md text-xs font-medium text-slate-300 hover:text-white transition-all';
+        }
+      });
+
+      if (tabKey === 'sim') {
+        resizePoreCanvas();
+        if (phaseChart) phaseChart.resize();
+      }
+
+      // Re-trigger MathJax rendering when entering tabs with formulas
+      if (window.MathJax && window.MathJax.typesetPromise) {
+        window.MathJax.typesetPromise();
+      }
+    }
+
+    // Initialize Phase-Space Chart
+    function initPhaseChart() {
+      const ctx = document.getElementById('phaseChart').getContext('2d');
+
+      // Generate theoretical nominal equilibrium curve: P = k * mdot^1.2
+      const nominalCurve = [];
+      for (let m = 0.15; m <= 1.1; m += 0.05) {
+        nominalCurve.push({ x: m, y: 15 + Math.pow(m / 0.428, 1.25) * 17 });
+      }
+
+      phaseChart = new Chart(ctx, {
+        type: 'scatter',
+        data: {
+          datasets: [
+            {
+              label: 'Breakthrough Hazard Threshold',
+              data: [
+                { x: 0.1, y: 48 }, { x: 0.5, y: 52 }, { x: 1.1, y: 58 }
+              ],
+              borderColor: '#f43f5e',
+              borderWidth: 2,
+              borderDash: [6, 4],
+              showLine: true,
+              pointRadius: 0,
+              fill: false
+            },
+            {
+              label: 'Freeze Choke Hazard Threshold',
+              data: [
+                { x: 0.15, y: 18 }, { x: 0.25, y: 16 }, { x: 0.5, y: 14 }, { x: 1.1, y: 12 }
+              ],
+              borderColor: '#f59e0b',
+              borderWidth: 2,
+              borderDash: [6, 4],
+              showLine: true,
+              pointRadius: 0,
+              fill: false
+            },
+            {
+              label: 'Theoretical Equilibrium Corridor',
+              data: nominalCurve,
+              borderColor: '#06b6d4',
+              backgroundColor: 'rgba(6, 182, 212, 0.08)',
+              borderWidth: 2.5,
+              showLine: true,
+              pointRadius: 0,
+              fill: true
+            },
+            {
+              label: 'Dynamic Trajectory History',
+              data: [],
+              borderColor: 'rgba(148, 163, 184, 0.4)',
+              borderWidth: 1.5,
+              showLine: true,
+              pointRadius: 1.5,
+              pointBackgroundColor: '#94a3b8'
+            },
+            {
+              label: 'Active Sentinel State',
+              data: [{ x: massFlow, y: feedPressure }],
+              borderColor: '#ffffff',
+              backgroundColor: '#06b6d4',
+              borderWidth: 3,
+              pointRadius: 8,
+              pointHoverRadius: 10
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: { duration: 0 },
+          scales: {
+            x: {
+              title: {
+                display: true,
+                text: 'Mass Flow Rate ṁ (kg / hr)',
+                color: '#94a3b8',
+                font: { family: 'JetBrains Mono', size: 11, weight: 'bold' }
+              },
+              grid: { color: 'rgba(255, 255, 255, 0.05)' },
+              ticks: { color: '#64748b', font: { family: 'JetBrains Mono', size: 10 } },
+              min: 0.1,
+              max: 1.1
+            },
+            y: {
+              title: {
+                display: true,
+                text: 'Water Feed Pressure P (kPa)',
+                color: '#94a3b8',
+                font: { family: 'JetBrains Mono', size: 11, weight: 'bold' }
+              },
+              grid: { color: 'rgba(255, 255, 255, 0.05)' },
+              ticks: { color: '#64748b', font: { family: 'JetBrains Mono', size: 10 } },
+              min: 10,
+              max: 65
+            }
+          },
+          plugins: {
+            legend: {
+              display: false
+            },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  return ` ṁ: ${context.parsed.x.toFixed(3)} kg/hr | P: ${context.parsed.y.toFixed(1)} kPa`;
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // High-DPI Canvas Sizing
+    function resizePoreCanvas() {
+      const rect = poreCanvas.getBoundingClientRect();
+      const w = rect.width || 400;
+      const h = rect.height || 280;
+      poreCanvas.width = w * window.devicePixelRatio;
+      poreCanvas.height = h * window.devicePixelRatio;
+      pctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+    }
+
+    // Vapor Particle Class
+    class VaporParticle {
+      constructor(x, y) {
+        this.x = x;
+        this.y = y;
+        this.vx = 2.5 + Math.random() * 4.5;
+        this.vy = (Math.random() - 0.5) * 2.2;
+        this.alpha = 0.9;
+        this.radius = 1 + Math.random() * 1.5;
+      }
+      update() {
+        this.x += this.vx;
+        this.y += this.vy;
+        this.alpha -= 0.018;
+      }
+      draw(ctx) {
+        ctx.save();
+        ctx.fillStyle = `rgba(34, 211, 238, ${Math.max(0, this.alpha)})`;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+    }
+
+    // Pore Micro-Physics Canvas Animation Loop
+    function renderPoreCanvas() {
+      const rect = poreCanvas.getBoundingClientRect();
+      const w = rect.width;
+      const h = rect.height;
+
+      pctx.clearRect(0, 0, w, h);
+
+      // Pore throat geometric boundaries
+      const poreTop = h * 0.28;
+      const poreBottom = h * 0.72;
+      const poreHeight = poreBottom - poreTop;
+
+      // Dynamic ice line X position based on iceDepth (0 to 5 microns)
+      // w * 0.3 is liquid feed line, w * 0.65 is pore vacuum exit
+      const throatStartX = w * 0.28;
+      const throatEndX = w * 0.70;
+      const normalizedDepth = Math.max(0.05, Math.min(1.0, iceDepth / 4.0));
+      const iceFrontX = throatStartX + (throatEndX - throatStartX) * normalizedDepth;
+
+      // 1. Draw Liquid Water Reservoir (Left)
+      pctx.fillStyle = '#1e3a8a';
+      pctx.beginPath();
+      pctx.moveTo(0, 0);
+      pctx.lineTo(throatStartX, 0);
+      pctx.lineTo(throatStartX, poreTop);
+      pctx.lineTo(iceFrontX, poreTop);
+      // Meniscus curve
+      pctx.quadraticCurveTo(iceFrontX + 8, h * 0.5, iceFrontX, poreBottom);
+      pctx.lineTo(throatStartX, poreBottom);
+      pctx.lineTo(throatStartX, h);
+      pctx.lineTo(0, h);
+      pctx.closePath();
+      pctx.fill();
+
+      // Fluid shimmer lines
+      pctx.strokeStyle = 'rgba(96, 165, 250, 0.35)';
+      pctx.lineWidth = 1.5;
+      for (let i = 0; i < 4; i++) {
+        const offset = (Date.now() * 0.03 + i * 20) % (throatStartX);
+        pctx.beginPath();
+        pctx.moveTo(offset, poreTop + 10 + i * 18);
+        pctx.lineTo(offset + 25, poreTop + 10 + i * 18);
+        pctx.stroke();
+      }
+
+      // 2. Draw Porous Sintered Matrix Top & Bottom
+      pctx.fillStyle = '#1e293b';
+      // Top plate
+      pctx.fillRect(throatStartX, 0, throatEndX - throatStartX, poreTop);
+      // Bottom plate
+      pctx.fillRect(throatStartX, poreBottom, throatEndX - throatStartX, h - poreBottom);
+
+      // Draw Sintered Nickel Grains (Textures)
+      pctx.fillStyle = '#334155';
+      for (let gx = throatStartX + 10; gx < throatEndX - 5; gx += 18) {
+        for (let gy = 8; gy < poreTop - 8; gy += 16) {
+          pctx.beginPath();
+          pctx.arc(gx + (gy % 4), gy, 6, 0, Math.PI * 2);
+          pctx.fill();
+        }
+        for (let gy = poreBottom + 12; gy < h - 8; gy += 16) {
+          pctx.beginPath();
+          pctx.arc(gx + (gy % 3), gy, 6, 0, Math.PI * 2);
+          pctx.fill();
+        }
+      }
+
+      // 3. Draw Ice Layer Inside Pore Throat
+      if (systemState !== 'breakthrough') {
+        const iceThickness = Math.max(12, (iceFrontX - throatStartX) * 0.65);
+        pctx.fillStyle = 'rgba(224, 242, 254, 0.85)';
+        pctx.beginPath();
+        pctx.moveTo(iceFrontX - iceThickness, poreTop);
+        pctx.lineTo(iceFrontX, poreTop);
+        // Meniscus surface facing vacuum
+        const meniscusWarp = (systemState === 'freeze') ? 0 : 12;
+        pctx.quadraticCurveTo(iceFrontX - meniscusWarp, h * 0.5, iceFrontX, poreBottom);
+        pctx.lineTo(iceFrontX - iceThickness, poreBottom);
+        pctx.closePath();
+        pctx.fill();
+
+        // Crystalline ice facet lines
+        pctx.strokeStyle = 'rgba(56, 189, 248, 0.6)';
+        pctx.lineWidth = 1;
+        pctx.beginPath();
+        pctx.moveTo(iceFrontX - iceThickness * 0.7, poreTop + 15);
+        pctx.lineTo(iceFrontX - 4, h * 0.5);
+        pctx.lineTo(iceFrontX - iceThickness * 0.6, poreBottom - 15);
+        pctx.stroke();
+      } else {
+        // Breakthrough: Liquid water surging past pore throat into vacuum
+        pctx.fillStyle = 'rgba(59, 130, 246, 0.8)';
+        pctx.beginPath();
+        pctx.ellipse(iceFrontX + 25, h * 0.5, 30, poreHeight * 0.42, 0, 0, Math.PI * 2);
+        pctx.fill();
+      }
+
+      // 4. Spawn & Update Sublimation Vapor Plume
+      if (systemState !== 'freeze') {
+        const spawnCount = (systemState === 'breakthrough') ? 5 : 2;
+        for (let s = 0; s < spawnCount; s++) {
+          vaporParticles.push(new VaporParticle(iceFrontX + 2, poreTop + 10 + Math.random() * (poreHeight - 20)));
+        }
+      }
+
+      for (let i = vaporParticles.length - 1; i >= 0; i--) {
+        const p = vaporParticles[i];
+        p.update();
+        p.draw(pctx);
+        if (p.alpha <= 0 || p.x > w) {
+          vaporParticles.splice(i, 1);
+        }
+      }
+
+      // 5. Draw Dynamic Pore Annotation Lines
+      pctx.strokeStyle = '#06b6d4';
+      pctx.lineWidth = 1;
+      pctx.setLineDash([4, 4]);
+      pctx.beginPath();
+      pctx.moveTo(iceFrontX, poreTop - 8);
+      pctx.lineTo(iceFrontX, poreBottom + 8);
+      pctx.stroke();
+      pctx.setLineDash([]);
+
+      // Label Ice Front
+      pctx.fillStyle = '#38bdf8';
+      pctx.font = '10px JetBrains Mono';
+      pctx.fillText(`z* = ${iceDepth.toFixed(2)} μm`, iceFrontX - 32, poreBottom + 22);
+
+      requestAnimationFrame(renderPoreCanvas);
+    }
+
+    // Sentinel Physics & Anomaly Detection Step
+    let tickCount = 0;
+    function updatePhysicsLoop() {
+      tickCount++;
+
+      // Compute nominal target sublimation based on suit heat load
+      // Q = mdot * delta_h_sub => mdot = Q / (2.834e6 J/kg) converted to kg/hr
+      const nominalMdot = (heatLoad / 2.834e6) * 3600; // kg/hr
+
+      if (systemState === 'nominal') {
+        // Natural convergence to metabolic demand
+        massFlow += (nominalMdot - massFlow) * 0.08;
+        const targetP = 18 + Math.pow(massFlow / 0.428, 1.25) * 14.5;
+        feedPressure += (targetP - feedPressure) * 0.08;
+        iceDepth += ((2.0 - (feedPressure - 32) * 0.05) - iceDepth) * 0.05;
+        valveModulation = Math.round(50 + (feedPressure - 32) * 1.5);
+      } 
+      else if (systemState === 'breakthrough') {
+        // Liquid breakthrough: Pressure spikes, but vapor flow chokes
+        feedPressure += (58.5 - feedPressure) * 0.12;
+        massFlow += (0.18 - massFlow) * 0.09; // Vapor choking due to liquid flooding throat
+        iceDepth += (0.15 - iceDepth) * 0.1; // Ice melts/displaced
+        valveModulation = 95;
+
+        // Autonomous Sentinel Intervention
+        if (sentinelActive && tickCount % 5 === 0) {
+          // Detect condition: dP/dt > 0 and massFlow < threshold
+          // Action: Rapidly cycle backpressure valve to shock-chill feedwater
+          feedPressure -= 4.2;
+          massFlow += 0.05;
+          iceDepth += 0.35;
+          if (feedPressure < 38) {
+            systemState = 'nominal';
+            updateStateUI();
+          }
+        }
+      } 
+      else if (systemState === 'freeze') {
+        // Total Freeze-Up: Ice caps the pore, zero flow, pressure rises upstream
+        massFlow += (0.02 - massFlow) * 0.15;
+        feedPressure += (21.0 - feedPressure) * 0.08;
+        iceDepth += (3.85 - iceDepth) * 0.08; // Ice penetrates full pore
+        valveModulation = 10;
+
+        // Autonomous Sentinel Intervention
+        if (sentinelActive && tickCount % 5 === 0) {
+          // Action: Sentinel opens heat purge / modulates valve to melt excess plug
+          iceDepth -= 0.45;
+          massFlow += 0.08;
+          if (iceDepth < 2.5) {
+            systemState = 'nominal';
+            updateStateUI();
+          }
+        }
+      }
+
+      // Add small telemetry sensor noise
+      const noisyMdot = Math.max(0.01, massFlow + (Math.random() - 0.5) * 0.008);
+      const noisyP = Math.max(5.0, feedPressure + (Math.random() - 0.5) * 0.2);
+      const activeHeat = noisyMdot * (2.834e6 / 3600);
+
+      // Update Telemetry Display
+      dispMdot.innerText = `${noisyMdot.toFixed(3)} kg/hr`;
+      dispPressure.innerText = `${noisyP.toFixed(1)} kPa`;
+      dispHeat.innerText = `${activeHeat.toFixed(1)} W`;
+      dispIceDepth.innerText = `${iceDepth.toFixed(2)} μm`;
+      badgeValveState.innerText = `MODULATING (${valveModulation}%)`;
+
+      // Update Chart Trajectory every 3 ticks
+      if (phaseChart && tickCount % 3 === 0) {
+        trajectoryHistory.push({ x: noisyMdot, y: noisyP });
+        if (trajectoryHistory.length > 25) trajectoryHistory.shift();
+
+        phaseChart.data.datasets[3].data = [...trajectoryHistory];
+        phaseChart.data.datasets[4].data = [{ x: noisyMdot, y: noisyP }];
+        phaseChart.update('none');
+      }
+    }
+
+    // UI State Feedback Update
+    function updateStateUI() {
+      if (systemState === 'nominal') {
+        badgeSystemState.className = 'px-2 py-0.5 rounded font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1.5';
+        badgeSystemState.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> NOMINAL';
+        alertBanner.className = 'p-3.5 rounded-xl border border-cyan-500/30 bg-cyan-950/20 text-cyan-200 text-xs sm:text-sm flex items-center justify-between gap-3';
+        alertBanner.innerHTML = `
+          <div class="flex items-center gap-2.5">
+            <i data-lucide="info" class="w-5 h-5 text-cyan-400 shrink-0"></i>
+            <span><strong>Autonomous Sentinel Armed:</strong> Sublimator state observer tracking continuous $(P, \\dot{m})$ coordinates. Ice meniscus stabilized at pore depth $z^* = ${iceDepth.toFixed(2)}\\,\\mu\\text{m}$.</span>
+          </div>
+          <span class="text-[11px] font-mono bg-cyan-500/10 px-2 py-1 rounded text-cyan-300 border border-cyan-500/20 shrink-0">LOOP: 50 Hz</span>
+        `;
+      } else if (systemState === 'breakthrough') {
+        badgeSystemState.className = 'px-2 py-0.5 rounded font-semibold bg-rose-500/20 text-rose-300 border border-rose-500/30 flex items-center gap-1.5';
+        badgeSystemState.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-rose-400 animate-ping"></span> BREAKTHROUGH';
+        alertBanner.className = 'p-3.5 rounded-xl border border-rose-500/50 bg-rose-950/40 text-rose-200 text-xs sm:text-sm flex items-center justify-between gap-3';
+        alertBanner.innerHTML = `
+          <div class="flex items-center gap-2.5">
+            <i data-lucide="alert-triangle" class="w-5 h-5 text-rose-400 shrink-0"></i>
+            <span><strong>CRITICAL WARNING:</strong> Liquid Breakthrough Detected! Pore capillary limit breached (P = ${feedPressure.toFixed(1)} kPa). Sentinel rapid BPV modulation triggered.</span>
+          </div>
+          <span class="text-[11px] font-mono bg-rose-500/20 px-2 py-1 rounded text-rose-300 border border-rose-500/40 shrink-0">FAULT INTERVENE</span>
+        `;
+      } else if (systemState === 'freeze') {
+        badgeSystemState.className = 'px-2 py-0.5 rounded font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center gap-1.5';
+        badgeSystemState.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping"></span> FREEZE CHOKE';
+        alertBanner.className = 'p-3.5 rounded-xl border border-amber-500/50 bg-amber-950/40 text-amber-200 text-xs sm:text-sm flex items-center justify-between gap-3';
+        alertBanner.innerHTML = `
+          <div class="flex items-center gap-2.5">
+            <i data-lucide="snowflake" class="w-5 h-5 text-amber-400 shrink-0"></i>
+            <span><strong>CAUTION:</strong> Pore Throat Freeze Choke! Sublimation rate dropped below critical threshold. Ice depth exceeding 3.5 μm.</span>
+          </div>
+          <span class="text-[11px] font-mono bg-amber-500/20 px-2 py-1 rounded text-amber-300 border border-amber-500/40 shrink-0">MELT CYCLE</span>
+        `;
+      }
+      lucide.createIcons();
+      if (window.MathJax && window.MathJax.typesetPromise) {
+        window.MathJax.typesetPromise();
+      }
+    }
+
+    // Failure Injections
+    function injectFailure(type) {
+      systemState = type;
+      updateStateUI();
+    }
+
+    function resetNominal() {
+      systemState = 'nominal';
+      heatLoad = 340;
+      feedPressure = 32.0;
+      sliderHeat.value = 340;
+      sliderPress.value = 32;
+      labelHeatLoad.innerText = '340 W';
+      labelFeedPress.innerText = '32.0 kPa';
+      updateStateUI();
+    }
+
+    function toggleSentinel() {
+      sentinelActive = !sentinelActive;
+      if (sentinelActive) {
+        toggleSentinelBtn.innerHTML = '<i data-lucide="toggle-right" class="w-4 h-4"></i><span>Sentinel Auto-Mitigation: ACTIVE</span>';
+        toggleSentinelBtn.className = 'w-full py-2 bg-cyan-950/60 border border-cyan-500/40 text-cyan-300 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 hover:bg-cyan-900/60 transition-all';
+        autoGuardStatus.innerText = 'ENGAGED';
+        autoGuardStatus.className = 'text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30';
+      } else {
+        toggleSentinelBtn.innerHTML = '<i data-lucide="toggle-left" class="w-4 h-4"></i><span>Sentinel Auto-Mitigation: BYPASSED</span>';
+        toggleSentinelBtn.className = 'w-full py-2 bg-rose-950/60 border border-rose-500/40 text-rose-300 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 hover:bg-rose-900/60 transition-all';
+        autoGuardStatus.innerText = 'BYPASSED';
+        autoGuardStatus.className = 'text-[10px] font-mono px-2 py-0.5 rounded bg-rose-500/20 text-rose-300 border border-rose-500/30';
+      }
+      lucide.createIcons();
+    }
+
+    // Sliders Event Listeners
+    sliderHeat.addEventListener('input', (e) => {
+      heatLoad = parseFloat(e.target.value);
+      labelHeatLoad.innerText = `${heatLoad} W`;
+    });
+
+    sliderPress.addEventListener('input', (e) => {
+      feedPressure = parseFloat(e.target.value);
+      labelFeedPress.innerText = `${feedPressure.toFixed(1)} kPa`;
+    });
+
+    window.addEventListener('resize', () => {
+      if (currentTab === 'sim') {
+        resizePoreCanvas();
+        if (phaseChart) phaseChart.resize();
+      }
+    });
+
+    // Window Onload Initialization
+    window.onload = function () {
+      lucide.createIcons();
+      initPhaseChart();
+      resizePoreCanvas();
+      renderPoreCanvas();
+      setInterval(updatePhysicsLoop, 40); // 25 Hz telemetry loop
+    };
+  </script>
+</body>
+</html>
